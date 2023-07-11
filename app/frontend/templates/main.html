@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<h1 class="text-center">WELCOME TO MEET ALL</h1>
+{% for space in spaces %}
+{% include '_space.html' %}
+{% endfor %}
+
+{% endblock %}

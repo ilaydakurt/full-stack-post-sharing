@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<form method="post" enctype="multipart/form-data" action="{{DOMAIN_URL}}/feed/post/{{post.id}}/edit/">
+  {% csrf_token %}
+
+  <div class="mb-3">
+    <label for="title" class="form-label">Title</label>
+    <input id="title" class="form-control" type="text" name="title" value="{{ post.title }}" placeholder="Title"
+      required />
+  </div>
+
+  <div class="mb-3">
+    <label for="description" class="form-label">Description</label>
+    <input id="description" class="form-control" type="text" name="description" value="{{ post.description }}"
+      placeholder="Description" />
+  </div>
+
+  <div class="mb-3">
+    <label for="post_link" class="form-label">Link</label>
+    <input id="post_link" class="form-control" type="text" name="post_link" value="{{ post.post_link }}"
+      placeholder="Link" required />
+  </div>
+
+
+  <div class="mb-3">
+    <label for="platform" class="form-label">Platform</label>
+    <input id="platform" class="form-control" type="text" name="platform" value="{{ post.platform }}"
+      placeholder="Like Twitter, Instagram, Tiktok etc." />
+  </div>
+
+  <input type="hidden" name="space" value="{{space.id}}">
+
+  <div class="input-group mb-3">
+    <input type="file" class="form-control" id="image" name="image" placeholder="Choose a File">
+  </div>
+
+  <button type="button" class="btn btn-outline-dark" data-bs-toggle="modal" data-bs-target="#labelModal">Add
+    Label</button>
+
+  <button class="btn btn-dark">Submit</button>
+
+</form>
+
+<div class="modal fade" id="labelModal" role="dialog">
+  <div class="modal-dialog">
+
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title">Add Label</h4>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <div class="modal-body">
+        {% for label in labels %}
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" id="label" name="label" value="{{label.id}}">
+          <label class="form-check-label" for="label">
+            {{label}}
+          </label>
+        </div>
+        {% endfor %}
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-dark" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

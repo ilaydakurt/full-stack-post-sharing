@@ -1,0 +1,288 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<button id="show-image-annotations" class="btn btn-sm btn-outline-dark">Show Image Annotations</button>
+<button id="show-annotations" class="btn btn-sm btn-outline-dark">Show Text Annotations</button>
+<button id="hide-annotations" class="btn btn-sm btn-outline-dark">Hide Text Annotations</button>
+<div class="card mt-2">
+  <div class="row g-0">
+    <div class="col-md-3">
+      <img data-bs-toggle="modal" data-bs-target="#image-annotation-modal" src="{{ post.image }}" alt="Post"
+        class="img-fluid rounded-start cursor-pointer">
+    </div>
+    <div class="col-md-9">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center">
+          <h5 class="card-title">{{ post.title}}</h5>
+          <span class="badge bg-dark mb-2">{{ post.platform }}</span>
+        </div>
+        <div class="card-text">
+          <div id="annotated-description">{{ post.description }}</div>
+        </div>
+        <a href="{{post.post_link}}" target="_blank">{{post.post_link}}</a>
+        <div class="card-text">{{ post.owner.first_name }} {{ post.owner.last_name }}{% if post.owner.badge %}
+          <img src="{% static 'badges/'|add:post.owner.badge.name|add:'.png' %}" style="width:25px;height:25px;">
+          {% endif %}
+        </div>
+        <div class="card-text">{{ post.created_time }}</div>
+        <div>
+          <p>Likes: <span class="like-count">{{ post.liked_by|length }}</span></p>
+        </div>
+        <div class="mb-3">
+          {% for label in post.label %}
+          <span class="badge bg-secondary">{{ label.name }}</span>
+          {% endfor %}
+        </div>
+        <div class="d-flex mt-2">
+          {% if is_post_owner %}
+          <a href="{{DOMAIN_URL}}/feed/post/{{post.id}}/edit_form/" class="btn btn-sm btn-outline-dark">Edit</a>
+          {% if is_delete_allowed %}
+          <a href="{{DOMAIN_URL}}/feed/post/{{post.id}}/delete/" class="btn btn-sm btn-outline-danger ms-2">Delete</a>
+          {% endif %}
+
+          {% else %}
+          {% if post in user_liked_posts %}
+          <a class="btn btn-sm btn-outline-dark" href='{{DOMAIN_URL}}/feed/post/{{post.id}}/undo_like_post/'>Undo
+            Like</a>
+          {% else %}
+          <a class="btn btn-sm btn-outline-dark" href='{{DOMAIN_URL}}/feed/post/{{post.id}}/like_post/'>Like</a>
+          {% endif %}
+
+          {% if post in user_bookmarked_posts %}
+          <a class="btn btn-sm btn-outline-dark ms-2"
+            href='{{DOMAIN_URL}}/feed/post/{{post.id}}/undo_bookmark_post/'>Undo Bookmark</a>
+          {% else %}
+          <a class="btn btn-sm btn-outline-dark ms-2"
+            href='{{DOMAIN_URL}}/feed/post/{{post.id}}/bookmark_post/'>Bookmark</a>
+          {% endif %}
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<form method="post" enctype="multipart/form-data" action="{{DOMAIN_URL}}/feed/post/{{post.id}}/add_comment/">
+  {% csrf_token %}
+
+  <div class="mb-3">
+    <label for="comment" class="form-label">Add Comment</label>
+    <textarea id="comment" class="form-control" name="comment" placeholder="Comment"></textarea>
+  </div>
+
+  <button class="btn btn-outline-dark">Submit</button>
+</form>
+<br>
+{% if comments %}
+<h4>Comments</h4>
+{% for comment in comments %}
+<div class="card mt-2">
+  <div class="card-body">
+    <h5 class="card-title">{{ comment.user.first_name}} {{ comment.user.last_name }}</h5>
+    <div class="card-text">{{ comment.created_time }}</div>
+    <div class="card-text">{{ comment.comment}}</div>
+  </div>
+</div>
+{% endfor %}
+{% endif %}
+
+<div class="modal fade" id="image-annotation-modal" role="dialog">
+  <div class="modal-dialog">
+
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title">Add Image Annotation</h4>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <div class="modal-body">
+        <form id="image-annotation-form" enctype="multipart/form-data">
+          <div class="mb-3">
+            <label for="annotation-body" class="form-label">Annotation Body</label>
+            <input id="image-annotation-input" class="form-control" type="text" placeholder="Annotation body"
+              required />
+          </div>
+          <button class="btn btn-outline-dark">Add Image Annotation</button>
+        </form>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
+<div class="modal fade" id="image-annotation-list-modal" role="dialog">
+  <div class="modal-dialog">
+
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title">Image Annotations</h4>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <div class="modal-body">
+        <ul class="list-group" id="image-annotation-list"></ul>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
+<script>
+  const AnnotationWidget = (args) => {
+    if (args.annotation.underlying.id) {
+      const annotationText = document.createElement('div');
+      annotationText.classList = 'p-2'
+      annotationText.textContent = args.annotation.underlying.body || 'No annotation...';
+
+      return annotationText;
+
+    } else {
+      const addValue = (event) => {
+        args.onUpsertBody({ value: event.target.value })
+      }
+
+      const formGroup = document.createElement('div')
+      formGroup.classList = 'p-2';
+
+      const formInput = document.createElement('input')
+      formInput.classList = 'form-control'
+      formInput.name = 'annotation-input';
+      formInput.placeholder = 'Add an annotation...'
+      formInput.addEventListener('change', addValue)
+
+      formGroup.appendChild(formInput)
+
+      return formGroup;
+    }
+  }
+
+  const r = Recogito.init({
+    content: document.getElementById('annotated-description'),
+    widgets: [
+      { widget: AnnotationWidget }
+    ],
+  });
+
+  const showAnnotationsButton = document.getElementById('show-annotations');
+  const hideAnnotationsButton = document.getElementById('hide-annotations');
+  const showImageAnnotationsButton = document.getElementById('show-image-annotations');
+  const imageAnnotationForm = document.getElementById('image-annotation-form');
+  const imageAnnotationInput = document.getElementById('image-annotation-input')
+  const imageAnnotationModal = new bootstrap.Modal('#image-annotation-modal');
+  const imageAnnotationListModal = new bootstrap.Modal('#image-annotation-list-modal');
+  const imageAnnotationList = document.getElementById('image-annotation-list')
+
+  hideAnnotationsButton.addEventListener('click', () => {
+    r.clearAnnotations();
+  })
+
+  showImageAnnotationsButton.addEventListener('click', async () => {
+    imageAnnotationListModal.show()
+
+    const response = await (await fetch('/feed/annotation/?source={{post.id}}&image=true')).json()
+
+    const imageAnnotations = response.results.filter(result => result.target.type === 'Image')
+    imageAnnotationList.innerHTML = '';
+    imageAnnotations.forEach(annotation => {
+      const liElement = document.createElement('li');
+      liElement.textContent = annotation.body.value;
+      liElement.classList = 'list-group-item d-flex justify-content-between'
+      imageAnnotationList.appendChild(liElement)
+      spanElement = document.createElement('span');
+
+      spanElement.textContent = new Intl.DateTimeFormat('en', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'Turkey' }).format(new Date(annotation.created));
+      spanElement.classList = 'badge bg-primary'
+      liElement.appendChild(spanElement);
+
+    })
+  })
+
+  imageAnnotationForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+
+    fetch('/feed/annotation/',
+      {
+        method: "POST",
+        mode: "same-origin",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": Cookies.get('csrftoken')
+        },
+        body: JSON.stringify({
+          body: { type: 'TextualBody', value: imageAnnotationInput.value },
+          target: {
+            source: "{{DOMAIN_URL}}/{{post.id}}/",
+            id: "{{DOMAIN_URL}}{{post.image}}",
+            type: "Image"
+          }
+        })
+      }
+    )
+    imageAnnotationModal.hide();
+    imageAnnotationInput.value = ''
+  })
+
+  showAnnotationsButton.addEventListener('click', async () => {
+    const response = await (await fetch('/feed/annotation/?source={{post.id}}&text=true')).json()
+
+    const annotations = response.results.map(result => {
+      return (
+        {
+          id: result.id,
+          type: 'Annotation',
+          body: result.body.value,
+          target: {
+            selector: [{
+              type: result.target.selector.type,
+              start: result.target.selector.start,
+              end: result.target.selector.end
+            }]
+          }
+        }
+      )
+    })
+    r.setAnnotations(annotations)
+  })
+
+  r.on('createAnnotation', function (annotation) {
+    const textPositionSelector = annotation.target.selector[1];
+    fetch('/feed/annotation/',
+      {
+        method: "POST",
+        mode: "same-origin",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": Cookies.get('csrftoken')
+        },
+        body: JSON.stringify({
+          body: { type: 'TextualBody', value: annotation.body[0].value },
+          target: {
+            source: "{{DOMAIN_URL}}/{{post.id}}/",
+            selector: {
+              type: "TextPositionSelector",
+              start: textPositionSelector.start,
+              end: textPositionSelector.end
+            }
+          }
+        })
+      }
+    )
+    window.location.reload();
+  });
+
+  r.on('deleteAnnotation', (annotation) => {
+    fetch(`/feed/annotation/${annotation.id}/`,
+      {
+        method: "DELETE",
+        headers: {
+          "X-CSRFToken": Cookies.get('csrftoken')
+        },
+      },
+    )
+  })
+</script>
+
+{% endblock %}

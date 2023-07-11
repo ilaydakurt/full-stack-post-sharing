@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2> {{ person.first_name}} {{ person.last_name }}</h2>
+
+{% if person_data in followings %}
+<a href="{{DOMAIN_URL}}/user/{{user.id}}/unfollow/" class="btn btn-outline-dark">Unfollow</a>
+{% else %}
+<a href="{{DOMAIN_URL}}/user/{{user.id}}/follow/" class="btn btn-outline-dark">Follow</a>
+{% endif %}
+
+{% for space in spaces %}
+{% include './_space.html' %}
+{% endfor %}
+
+{% endblock %}
