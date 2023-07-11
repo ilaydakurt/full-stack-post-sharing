@@ -1,21 +1,3 @@
-# SWE574 Spring 2023
-This repository is a project for the class named SWE574 - Software Development as a Team in Boğaziçi University Software Engineering Department.
-
-### URL
-Project URL: http://13.48.149.195:8000/<br/>
-Swagger Documentation: http://13.48.149.195:8000/swagger/<br/>
-Admin Panel: http://13.48.149.195:8000/admin/
-
-### Team
-- Afize Özcan
-- Cansın Cömert
-- Doğukan Arslan
-- Ege Pekgenç
-- İlayda Kurt
-- Mehmet Emre Berk
-- Miray İyidoğan
-- Samed Torun
-
 ### Run with Docker
 
 After you started the docker and be sure about docker is running then you can simply
